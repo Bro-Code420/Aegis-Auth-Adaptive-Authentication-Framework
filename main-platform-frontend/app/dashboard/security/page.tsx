@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -19,7 +19,6 @@ import { useMutation, useQuery, useConvexAuth } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
 import { toast } from "sonner"
-import { useEffect } from "react"
 
 export default function RiskPoliciesPage() {
   const { isAuthenticated, isLoading } = useConvexAuth()

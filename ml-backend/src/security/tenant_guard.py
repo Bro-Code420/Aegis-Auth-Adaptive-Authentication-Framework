@@ -119,6 +119,27 @@ class TenantRegistry:
 
         record = self._key_store.get(api_key)
         if not record:
+            # Query authoritative Convex Cloud datastore for newly provisioned applications
+            try:
+                from src.utils.convex import get_convex_client
+                client = get_convex_client()
+                if client:
+                    app = client.query("applications:getByApiKey", {"apiKey": api_key, "appId": requested_app_id})
+                    if app:
+                        tenant_id = f"ten_{app.get('appId', requested_app_id or 'app')}"
+                        self.register_tenant_key(
+                            api_key=api_key,
+                            tenant_id=tenant_id,
+                            app_id=app.get("appId", requested_app_id or "app"),
+                            organization_id=app.get("organizationId", "org_default"),
+                            is_admin=False,
+                            environment="production"
+                        )
+                        record = self._key_store.get(api_key)
+            except Exception as e:
+                logger.warning(f"Failed to query dynamic application key from Convex: {e}")
+
+        if not record:
             logger.warning(f"[AuthFailed] Unknown or revoked API key attempted: {api_key[:8]}...")
             raise HTTPException(status_code=401, detail="Unauthorized: Invalid, unverified, or revoked API key.")
 

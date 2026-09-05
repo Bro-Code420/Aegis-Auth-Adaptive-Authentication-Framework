@@ -356,8 +356,10 @@ export const createSession = mutation({
             payload: { action: "INITIATE_SESSION", result: "SUCCESS" }
         });
 
-        // Enter state machine
-        await transitionSession(ctx.db, sessionId, "EVALUATING", "SESSION_CREATED", correlationId);
+        // Enter state machine if new
+        if (!args.initialState || args.initialState === "NEW") {
+            await transitionSession(ctx.db, sessionId, "EVALUATING", "SESSION_CREATED", correlationId);
+        }
 
         // Generate LOGIN alert
         await ctx.db.insert("alerts", {
