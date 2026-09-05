@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useOrganization } from "@/components/providers/organization-provider"
 import { Card, CardContent } from "@/components/ui/card"
@@ -91,7 +91,7 @@ function AppDetailsContent({
           { label: "App ID", value: app.appId, id: "id" },
           { label: "API Key", value: app.apiKey, id: "key" },
           { label: "Secret", value: app.secret, id: "secret" },
-          { label: "Base URL", value: process.env.NEXT_PUBLIC_AEGIS_BASE_URL || "http://127.0.0.1:8000", id: "url" },
+          { label: "Base URL", value: process.env.NEXT_PUBLIC_AEGIS_BASE_URL || "https://aegis-auth-adaptive-authentication.onrender.com", id: "url" },
         ].map((field) => (
           <div key={field.id} className="group relative flex flex-col gap-1.5 border-l-2 border-primary/30 pl-4 py-1 hover:border-primary transition-colors">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{field.label}</span>
