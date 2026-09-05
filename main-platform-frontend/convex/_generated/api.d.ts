@@ -20,11 +20,13 @@ import type * as ml from "../ml.js";
 import type * as organizations from "../organizations.js";
 import type * as platformAuth from "../platformAuth.js";
 import type * as riskPolicies from "../riskPolicies.js";
+import type * as safetyController from "../safetyController.js";
 import type * as securitySettings from "../securitySettings.js";
 import type * as sessionState from "../sessionState.js";
 import type * as sessions from "../sessions.js";
 import type * as support from "../support.js";
 import type * as test from "../test.js";
+import type * as webauthn from "../webauthn.js";
 
 import type {
   ApiFromModules,
@@ -45,11 +47,13 @@ declare const fullApi: ApiFromModules<{
   organizations: typeof organizations;
   platformAuth: typeof platformAuth;
   riskPolicies: typeof riskPolicies;
+  safetyController: typeof safetyController;
   securitySettings: typeof securitySettings;
   sessionState: typeof sessionState;
   sessions: typeof sessions;
   support: typeof support;
   test: typeof test;
+  webauthn: typeof webauthn;
 }>;
 
 /**
