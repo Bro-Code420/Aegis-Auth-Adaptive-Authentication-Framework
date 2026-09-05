@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 1. Main Platform Dashboard
+  platform-frontend:
+    build:
+      context: ./main-platform-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - CONVEX_URL=${CONVEX_URL}
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL}
+    env_file:
+      - ./main-platform-frontend/.env.local
+    restart: always
+
+  # 2. ML Risk Assessment Backend
+  ml-backend:
+    build:
+      context: ./ml-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ml-backend/.env.local
+    restart: always
+
+  # 3. Example Demo Application (Twitter Clone)
+  demo-app:
+    build:
+      context: ./example-demo-app
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - AEGIS_BASE_URL=http://ml-backend:8000/auth
+    env_file:
+      - ./example-demo-app/.env.local
+    depends_on:
+      - ml-backend
+    restart: always
+
+networks:
+  default:
+    driver: bridge

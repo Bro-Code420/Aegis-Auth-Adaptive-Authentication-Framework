@@ -10,7 +10,9 @@ export type AegisEventType =
     | "ACTION_DISPATCHED" 
     | "ACTION_EXECUTED" 
     | "ACTION_FAILED"
-    | "STATE_TRANSITIONED";
+    | "STATE_TRANSITIONED"
+    | "STEP_UP_VERIFIED"
+    | "REPLAY_BLOCKED";
 
 /**
  * Structured event for the AegisAuth pipeline.

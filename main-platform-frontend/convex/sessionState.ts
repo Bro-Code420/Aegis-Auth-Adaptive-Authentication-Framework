@@ -7,38 +7,63 @@ export type SessionState =
     | "NEW" 
     | "EVALUATING" 
     | "ACTIVE" 
+    | "SUSPICIOUS" 
     | "CHALLENGED" 
     | "RESTRICTED" 
+    | "CONTAINED" 
+    | "REVOKED" 
     | "BLOCKED" 
+    | "RECOVERY" 
     | "TERMINATED";
 
 const VALID_TRANSITIONS: Record<SessionState, SessionState[]> = {
-    NEW: ["EVALUATING"],
-    EVALUATING: ["ACTIVE", "CHALLENGED", "RESTRICTED", "BLOCKED"],
-    ACTIVE: ["EVALUATING", "CHALLENGED", "RESTRICTED", "BLOCKED", "TERMINATED"],
-    CHALLENGED: ["ACTIVE", "RESTRICTED", "BLOCKED", "TERMINATED"],
-    RESTRICTED: ["EVALUATING", "CHALLENGED", "BLOCKED", "TERMINATED"],
+    NEW: ["EVALUATING", "ACTIVE", "CHALLENGED", "RESTRICTED", "CONTAINED", "BLOCKED"],
+    EVALUATING: ["ACTIVE", "SUSPICIOUS", "CHALLENGED", "RESTRICTED", "CONTAINED", "REVOKED", "BLOCKED"],
+    ACTIVE: ["EVALUATING", "SUSPICIOUS", "CHALLENGED", "RESTRICTED", "CONTAINED", "BLOCKED", "TERMINATED"],
+    SUSPICIOUS: ["EVALUATING", "ACTIVE", "CHALLENGED", "RESTRICTED", "CONTAINED", "BLOCKED", "TERMINATED"],
+    CHALLENGED: ["ACTIVE", "RESTRICTED", "CONTAINED", "REVOKED", "BLOCKED", "TERMINATED"],
+    RESTRICTED: ["EVALUATING", "ACTIVE", "CHALLENGED", "CONTAINED", "BLOCKED", "TERMINATED"],
+    CONTAINED: ["RECOVERY", "REVOKED", "TERMINATED"],
+    REVOKED: ["TERMINATED"],
     BLOCKED: ["TERMINATED"],
+    RECOVERY: ["ACTIVE", "CHALLENGED", "REVOKED", "TERMINATED"],
     TERMINATED: [],
 };
 
 /**
- * Centralized manager for session state transitions.
- * Enforces validation, increments state version, and logs action execution.
+ * Hardened centralized manager for session state transitions.
+ * Enforces validation, rejects stale decisions via monotonic versioning, and logs audit events.
  */
 export async function transitionSession(
     db: GenericDatabaseWriter<any>,
     sessionId: Id<"sessions">,
     nextState: SessionState,
     reason: string,
-    correlationId: string
+    correlationId: string,
+    expectedVersion?: number
 ): Promise<void> {
     const session = await db.get(sessionId);
     if (!session) throw new Error("Session not found");
 
-    const currentState = session.state as SessionState;
+    const currentState = (session.state as SessionState) || "NEW";
+    const currentVersion = session.stateVersion ?? 0;
 
-    // 1. Terminal State Enforcement (Backend Protected Layer)
+    // 1. Stale-Decision Race Protection
+    if (expectedVersion !== undefined && expectedVersion < currentVersion) {
+        const errorMsg = `STALE_DECISION_REJECTED: Received transition with version ${expectedVersion} < currentVersion ${currentVersion}`;
+        console.warn(`[Aegis State Machine] ${errorMsg}`);
+        
+        await emitEvent(db, {
+            type: "ACTION_FAILED",
+            sessionId,
+            correlationId,
+            applicationId: session.applicationId,
+            payload: { action: "STATE_TRANSITION", reason: "STALE_VERSION_REJECTED", from: currentState, attempted: nextState }
+        });
+        return;
+    }
+
+    // 2. Terminal State Enforcement
     if (currentState === "TERMINATED") {
         const errorMsg = `FORBIDDEN: Attempted mutation from terminal state ${currentState} for session ${sessionId}`;
         console.error(errorMsg);
@@ -56,7 +81,7 @@ export async function transitionSession(
 
     if (currentState === nextState) return;
 
-    // 2. State Machine Logic Validation
+    // 3. State Machine Logic Validation
     const allowed = VALID_TRANSITIONS[currentState] || [];
     if (!allowed.includes(nextState)) {
         const errorMsg = `Invalid transition: ${currentState} -> ${nextState} for session ${sessionId}`;
@@ -73,14 +98,16 @@ export async function transitionSession(
         throw new Error(errorMsg);
     }
 
-    // 3. Persistence
+    const nextVersion = currentVersion + 1;
+
+    // 4. Persistence with Monotonic Version Increment
     await db.patch(sessionId, {
         state: nextState,
-        stateVersion: (session.stateVersion ?? 0) + 1,
+        stateVersion: nextVersion,
         updatedAt: Date.now(),
     });
 
-    // 4. ACTION_EXECUTED Event (Deterministic Outcome)
+    // 5. ACTION_EXECUTED & STATE_TRANSITIONED Events
     await emitEvent(db, {
         type: "ACTION_EXECUTED",
         sessionId,
@@ -89,7 +116,6 @@ export async function transitionSession(
         payload: { action: "STATE_TRANSITION", result: "SUCCESS", from: currentState, to: nextState }
     });
 
-    // 5. Emit Traceable Event
     await emitEvent(db, {
         type: "STATE_TRANSITIONED",
         sessionId: sessionId,
@@ -99,9 +125,9 @@ export async function transitionSession(
             from: currentState,
             to: nextState,
             reason: reason,
-            state_version: (session.stateVersion ?? 0) + 1
+            state_version: nextVersion
         }
     });
 
-    console.log(`[Aegis State Machine] Transitioned session ${sessionId}: ${currentState} -> ${nextState} (Correlation: ${correlationId})`);
+    console.log(`[Aegis State Machine] Transitioned session ${sessionId}: ${currentState} -> ${nextState} (v${nextVersion}, Correlation: ${correlationId})`);
 }

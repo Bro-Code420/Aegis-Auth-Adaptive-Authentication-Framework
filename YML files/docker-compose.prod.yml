@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # 1. Main Platform Dashboard (Production Build)
+  platform-frontend:
+    build:
+      context: ./main-platform-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - CONVEX_URL=${CONVEX_URL}
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL}
+    restart: unless-stopped
+
+  # 2. ML Risk Assessment Backend (Production Mode)
+  ml-backend:
+    build:
+      context: ./ml-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - API_RELOAD=false
+      - LOG_LEVEL=INFO
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+    env_file:
+      - ./ml-backend/.env
+    restart: unless-stopped
+
+  # 3. Example Demo Application (Optimized Build)
+  demo-app:
+    build:
+      context: ./example-demo-app
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - AEGIS_BASE_URL=http://ml-backend:8000/auth
+    env_file:
+      - ./example-demo-app/.env
+    depends_on:
+      - ml-backend
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
