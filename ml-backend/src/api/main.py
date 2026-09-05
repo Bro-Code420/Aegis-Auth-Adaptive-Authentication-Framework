@@ -68,15 +68,28 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "https://aegis-auth-adaptive-authentication.vercel.app",
     "https://insightful-perch-941.convex.cloud",
-    "https://insightful-perch-941.convex.site"
+    "https://insightful-perch-941.convex.site",
+    "https://mild-greyhound-316.convex.cloud",
+    "https://mild-greyhound-316.convex.site"
 ]
 
+
+def is_origin_allowed(origin: str | None) -> bool:
+    if not origin:
+        return True
+    if origin in ALLOWED_ORIGINS:
+        return True
+    if origin.endswith(".vercel.app") or origin.endswith(".convex.cloud") or origin.endswith(".convex.site"):
+        return True
+    return False
 
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.convex\.(cloud|site)",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -121,7 +134,7 @@ async def validate_api_key_and_origin(request: Request, call_next):
 
     # 3. Origin validation (Secondary Security for Browser Requests)
     origin = request.headers.get("origin")
-    if origin and origin not in ALLOWED_ORIGINS:
+    if origin and not is_origin_allowed(origin):
         logger.warning(f"Forbidden Origin blocked: {origin}")
         return JSONResponse(
             status_code=403,
