@@ -1,0 +1,94 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# npm lockfile
+package-lock.json
+
+# Next.js
+.next/
+out/
+.next/cache/
+
+# Build / output
+dist/
+build/
+.offline/
+
+# Logs
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# dotenv
+.env
+.env.*
+.env.local
+**/.env
+**/.env.local
+**/.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# TypeScript
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+.env/
+.pytest_cache/
+.mypy_cache/
+
+# Packaging
+pip-wheel-metadata/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# ML / large files
+ml-backend/data/processed/
+
+# Caches
+.cache/
+
+# Convex generated
+convex/_generated/
+
+# Misc
+*.tgz
+*.bak
+
+# Local settings
+/local.env
+# Keep lockfiles (e.g., pnpm-lock.yaml) in repo
+
