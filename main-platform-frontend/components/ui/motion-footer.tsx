@@ -306,7 +306,7 @@ export function CinematicFooter() {
             ref={giantTextRef}
             className="footer-giant-bg-text absolute -bottom-[5vh] left-1/2 -translate-x-1/2 whitespace-nowrap z-0 pointer-events-none select-none"
           >
-            SECURIFY
+            AEGISAUTH
           </div>
 
           {/* 1. Diagonal Sleek Marquee (Top of footer) */}
@@ -356,7 +356,7 @@ export function CinematicFooter() {
                 <MagneticButton as="a" href="#company" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
                   Security
                 </MagneticButton>
-                <MagneticButton as="a" href="mailto:support@securify.com" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
+                <MagneticButton as="a" href="mailto:support@aegisauth.pro" className="footer-glass-pill px-6 py-3 rounded-full text-muted-foreground font-medium text-xs md:text-sm hover:text-foreground">
                   Support
                 </MagneticButton>
               </div>
@@ -368,7 +368,7 @@ export function CinematicFooter() {
             
             {/* Copyright */}
             <div className="text-muted-foreground text-[10px] md:text-xs font-semibold tracking-widest uppercase order-2 md:order-1">
-              © 2026 securify. All rights reserved.
+              © 2026 AegisAuth Pro. All rights reserved.
             </div>
 
             {/* "Made with Love" Badge */}
