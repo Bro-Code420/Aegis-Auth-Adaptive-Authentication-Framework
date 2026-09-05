@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
+import { Badge } from "@/components/ui/badge";
+
 const scenarios: SimulationScenario[] = [
   {
     id: "brute_force",
@@ -24,12 +26,56 @@ const scenarios: SimulationScenario[] = [
     metadata: {
       failed_attempts: 15,
       mfa_failures: 2,
-      ip_reputation_score: 0.75,
+      ip_reputation_score: 0.15,
       location: "Data Center (Frankfurt)",
       device_known: 0,
+      country_changed: 1,
+      login_velocity: 8.5,
       expected: "BLOCK"
     }
   },
+  {
+    id: "malicious_ip",
+    name: "Tor Exit Node Anomaly",
+    description: "Login initiated from a known anonymized Tor exit relay with low IP reputation.",
+    metadata: {
+      is_tor: true,
+      is_vpn: true,
+      ip_reputation_score: 0.05,
+      location: "Tor Exit Node (Amsterdam)",
+      device_known: 0,
+      country_changed: 1,
+      failed_attempts: 4,
+      expected: "CHALLENGE"
+    }
+  },
+  {
+    id: "impossible_travel",
+    name: "Impossible Travel Detection",
+    description: "Geographically impossible physical displacement (>800 km/h) between consecutive logins.",
+    metadata: {
+      geo_velocity_kmh: 3200,
+      country_changed: 1,
+      last_location: "New York, USA",
+      current_location: "Tokyo, Japan",
+      delta_minutes: 15,
+      device_known: 1,
+      expected: "CHALLENGE"
+    }
+  },
+  {
+    id: "device_hijack",
+    name: "Device Fingerprint Hijack",
+    description: "Altered browser canvas and hardware entropy flags indicating cookie replay or session clone.",
+    metadata: {
+      device_known: 0,
+      asn_changed: 1,
+      user_agent_mismatch: true,
+      entropy_shift_score: 0.88,
+      failed_attempts: 2,
+      expected: "RESTRICT"
+    }
+  }
 ];
 
 import { useRouter } from "next/navigation";
@@ -177,7 +223,7 @@ export default function SimulationsPage() {
               </div>
           </div>
           <Button variant="outline" className="gap-2 rounded-xl" asChild>
-              <a href="http://localhost:3000/dashboard/applications/jd7bhys267aztx1ry3yh7c4atx8462aa" target="_blank">
+              <a href="https://aegis-auth-adaptive-authentication.vercel.app/dashboard/applications" target="_blank">
                 <LayoutDashboard className="size-4" />
                 Open Dashboard
               </a>
