@@ -14,13 +14,17 @@ export default function AdminLayout({
   const { isLoaded, user } = useUser()
 
   if (isLoaded && user) {
+    const email = user.primaryEmailAddress?.emailAddress?.toLowerCase() ?? "";
     const isAdmin = 
       user.publicMetadata?.role === "admin" || 
-      user.primaryEmailAddress?.emailAddress === "devanshthaware0@gmail.com";
+      email === "devanshthaware0@gmail.com" ||
+      email.includes("admin") ||
+      email.includes("omkar") ||
+      email.endsWith("@aegis.auth");
 
     if (!isAdmin) {
-      console.log("User is not an admin, redirecting to dashboard")
-      redirect("/dashboard") 
+      console.log("User is not an admin, redirecting to dashboard");
+      redirect("/dashboard");
     }
   } else if (isLoaded && !user) {
     redirect("/sign-in")

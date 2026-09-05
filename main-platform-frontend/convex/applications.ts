@@ -176,6 +176,52 @@ export const toggleStatus = mutation({
     },
 });
 
+export const remove = mutation({
+    args: { id: v.id("applications") },
+    handler: async (ctx, args) => {
+        await validateOwnership(ctx, args.id);
+
+        // Delete associated sessions
+        const sessions = await ctx.db
+            .query("sessions")
+            .withIndex("by_application", (q) => q.eq("applicationId", args.id))
+            .collect();
+        for (const s of sessions) {
+            await ctx.db.delete(s._id);
+        }
+
+        // Delete associated securitySettings
+        const settings = await ctx.db
+            .query("securitySettings")
+            .withIndex("by_application", (q) => q.eq("applicationId", args.id))
+            .collect();
+        for (const set of settings) {
+            await ctx.db.delete(set._id);
+        }
+
+        // Delete associated activities
+        const activities = await ctx.db
+            .query("activities")
+            .withIndex("by_application", (q) => q.eq("applicationId", args.id))
+            .collect();
+        for (const act of activities) {
+            await ctx.db.delete(act._id);
+        }
+
+        // Delete associated alerts
+        const alerts = await ctx.db
+            .query("alerts")
+            .filter((q) => q.eq(q.field("applicationId"), args.id))
+            .collect();
+        for (const alert of alerts) {
+            await ctx.db.delete(alert._id);
+        }
+
+        // Delete the application itself
+        await ctx.db.delete(args.id);
+    },
+});
+
 export const getByApiKey = query({
     args: { apiKey: v.string(), appId: v.optional(v.string()) },
     handler: async (ctx, args) => {

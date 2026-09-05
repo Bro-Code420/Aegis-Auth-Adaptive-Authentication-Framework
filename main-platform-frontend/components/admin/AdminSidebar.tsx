@@ -76,6 +76,15 @@ export function AdminSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <div className="px-4 py-2">
+        <Link 
+          href="/dashboard" 
+          className="text-xs text-muted-foreground hover:text-emerald-400 flex items-center gap-2 py-1 transition-colors"
+        >
+          <Shield className="size-3.5" />
+          <span>Developer Dashboard &rarr;</span>
+        </Link>
+      </div>
       <Separator className="bg-border" />
       <SidebarFooter className="p-4">
         <div className="flex items-center justify-between">

@@ -19,8 +19,19 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   Dialog,
   DialogContent,
@@ -39,7 +50,7 @@ import {
 } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
-import { MoreHorizontal, Plus, Search, ArrowUpDown, X, ChevronRight, ArrowRight, ArrowLeft, ExternalLink, Copy, Check } from "lucide-react"
+import { MoreHorizontal, Plus, Search, ArrowUpDown, X, ChevronRight, ArrowRight, ArrowLeft, ExternalLink, Copy, Check, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { useMutation, useQuery } from "convex/react"
@@ -175,6 +186,7 @@ export default function ApplicationsPage() {
   const createApp = useMutation(api.applications.create)
   const updateApp = useMutation(api.applications.update)
   const toggleStatus = useMutation(api.applications.toggleStatus)
+  const deleteApp = useMutation(api.applications.remove)
 
   const ensureOrg = useMutation(api.organizations.ensureUserOrganization)
   const seedPolicies = useMutation(api.riskPolicies.seed)
@@ -210,6 +222,8 @@ export default function ApplicationsPage() {
 
   const [editOpen, setEditOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [deleteAppModal, setDeleteAppModal] = useState<Application | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [editingApp, setEditingApp] = useState<Application | null>(null)
   const [selectedApp, setSelectedApp] = useState<Application | null>(null)
   const [editedAppData, setEditedAppData] = useState({ name: "", environment: "", riskPolicyId: "" as Id<"riskPolicies"> })
@@ -729,10 +743,18 @@ export default function ApplicationsPage() {
                             Manage API Keys
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="cursor-pointer text-destructive"
+                            className="cursor-pointer"
                             onClick={() => handleToggleStatus(app._id, app.name)}
                           >
                             {app.status === "Active" ? "Disable Application" : "Enable Application"}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onClick={() => setDeleteAppModal(app)}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Delete Application
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -801,6 +823,44 @@ export default function ApplicationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteAppModal} onOpenChange={(open) => !open && setDeleteAppModal(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="size-5" />
+              Delete Application
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong className="text-foreground">{deleteAppModal?.name}</strong>?
+              This action cannot be undone and will permanently delete this application, its API keys, security policies, and all associated session logs.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async (e) => {
+                e.preventDefault()
+                if (!deleteAppModal) return
+                setIsDeleting(true)
+                try {
+                  await deleteApp({ id: deleteAppModal._id })
+                  toast.success(`Application "${deleteAppModal.name}" has been deleted.`)
+                  setDeleteAppModal(null)
+                } catch (err) {
+                  toast.error("Failed to delete application.")
+                } finally {
+                  setIsDeleting(false)
+                }
+              }}
+            >
+              {isDeleting ? "Deleting..." : "Delete Application"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
