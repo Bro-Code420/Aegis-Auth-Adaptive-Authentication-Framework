@@ -28,6 +28,44 @@ export const getUserOrganizations = query({
   }
 });
 
+export const ensureUserOrganization = mutation({
+  args: {
+    defaultName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+
+    const userId = identity.subject;
+
+    // Check if user already belongs to any organization
+    const existingMembership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .first();
+
+    if (existingMembership) {
+      return existingMembership.organizationId;
+    }
+
+    // Auto-create default organization for the user
+    const name = args.defaultName || (identity.name ? `${identity.name}'s Workspace` : "Primary Workspace");
+    const organizationId = await ctx.db.insert("organizations", {
+      name,
+      ownerId: userId,
+      createdAt: Date.now(),
+    });
+
+    await ctx.db.insert("organizationMembers", {
+      organizationId,
+      userId: userId,
+      role: "owner",
+    });
+
+    return organizationId;
+  }
+});
+
 export const create = mutation({
   args: {
     name: v.string(),

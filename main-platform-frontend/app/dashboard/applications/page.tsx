@@ -176,6 +176,9 @@ export default function ApplicationsPage() {
   const updateApp = useMutation(api.applications.update)
   const toggleStatus = useMutation(api.applications.toggleStatus)
 
+  const ensureOrg = useMutation(api.organizations.ensureUserOrganization)
+  const seedPolicies = useMutation(api.riskPolicies.seed)
+
   const [search, setSearch] = useState("")
   const [sortField, setSortField] = useState<SortField>(null)
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -190,6 +193,20 @@ export default function ApplicationsPage() {
     mlEnhancement: true,
     organizationId: "" as Id<"organizations">
   })
+
+  // Auto-fill organization and risk policy if empty
+  useEffect(() => {
+    if (addOpen) {
+      const targetOrg = newApp.organizationId || activeOrganization || organizations?.[0]?._id
+      const targetPolicy = newApp.riskPolicyId || policies?.[0]?._id
+      if (targetOrg && targetOrg !== newApp.organizationId) {
+        setNewApp(prev => ({ ...prev, organizationId: targetOrg as Id<"organizations"> }))
+      }
+      if (targetPolicy && targetPolicy !== newApp.riskPolicyId) {
+        setNewApp(prev => ({ ...prev, riskPolicyId: targetPolicy as Id<"riskPolicies"> }))
+      }
+    }
+  }, [addOpen, activeOrganization, organizations, policies, newApp.organizationId, newApp.riskPolicyId])
 
   const [editOpen, setEditOpen] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -231,19 +248,29 @@ export default function ApplicationsPage() {
   }, [apps, search, sortField, sortDir])
 
   async function handleAddApp() {
-    if (!newApp.name.trim() || !newApp.riskPolicyId) {
-      toast.error("Please fill in all required fields")
-      return
-    }
+    if (!newApp.name.trim()) return
+
     try {
+      let targetOrg = newApp.organizationId || activeOrganization || organizations?.[0]?._id
+      if (!targetOrg) {
+        targetOrg = (await ensureOrg({})) as Id<"organizations">
+      }
+
+      let targetPolicy = newApp.riskPolicyId || policies?.[0]?._id
+      if (!targetPolicy) {
+        await seedPolicies({})
+        const seededList = await policies
+        targetPolicy = seededList?.[0]?._id || targetPolicy
+      }
+
       const createdApp = await createApp({
         name: newApp.name.trim(),
         environment: newApp.environment,
-        riskPolicyId: newApp.riskPolicyId,
+        riskPolicyId: targetPolicy as Id<"riskPolicies">,
         type: newApp.type,
         redirectUri: newApp.redirectUri || undefined,
         mlEnhancement: newApp.mlEnhancement,
-        organizationId: newApp.organizationId
+        organizationId: targetOrg as Id<"organizations">
       })
       setSelectedApp(createdApp as any)
       setAddStep(3)
@@ -405,13 +432,34 @@ export default function ApplicationsPage() {
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <Label className="text-sm font-semibold">Organization</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Organization</Label>
+                      {(!organizations || organizations.length === 0) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const orgId = await ensureOrg({})
+                              if (orgId) {
+                                setNewApp(prev => ({ ...prev, organizationId: orgId as Id<"organizations"> }))
+                                toast.success("Workspace created successfully!")
+                              }
+                            } catch (e) {
+                              toast.error("Failed to create workspace")
+                            }
+                          }}
+                          className="text-xs text-primary hover:underline font-semibold"
+                        >
+                          + Auto-create Workspace
+                        </button>
+                      )}
+                    </div>
                     <Select
-                      value={newApp.organizationId}
+                      value={newApp.organizationId || (organizations?.[0]?._id ?? "")}
                       onValueChange={(v) => setNewApp({ ...newApp, organizationId: v as Id<"organizations"> })}
                     >
                       <SelectTrigger className="h-11 rounded-xl border border-border bg-secondary/30 px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all">
-                        <SelectValue placeholder="Select organization" />
+                        <SelectValue placeholder={organizations?.length ? "Select organization" : "Primary Workspace (Auto-provisioned)"} />
                       </SelectTrigger>
                       <SelectContent>
                         {organizations?.map((org: any) => (
@@ -433,8 +481,18 @@ export default function ApplicationsPage() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => setAddStep(2)}
-                    disabled={!newApp.name.trim() || !newApp.organizationId}
+                    onClick={async () => {
+                      if (!newApp.organizationId) {
+                        try {
+                          const orgId = await ensureOrg({})
+                          if (orgId) {
+                            setNewApp(prev => ({ ...prev, organizationId: orgId as Id<"organizations"> }))
+                          }
+                        } catch (e) {}
+                      }
+                      setAddStep(2)
+                    }}
+                    disabled={!newApp.name.trim()}
                     className="rounded-xl px-6 h-11 gap-2 font-medium bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Continue
