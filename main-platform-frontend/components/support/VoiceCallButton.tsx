@@ -17,7 +17,8 @@ export function VoiceCallButton() {
         setCallStatus("connecting");
 
         try {
-            const response = await fetch("http://localhost:8000/api/v1/support/call", {
+            const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || "https://aegis-auth-adaptive-authentication.onrender.com";
+            const response = await fetch(`${mlBackendUrl}/api/v1/support/call`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

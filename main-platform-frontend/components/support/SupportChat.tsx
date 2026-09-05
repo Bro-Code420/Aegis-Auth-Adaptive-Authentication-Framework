@@ -109,7 +109,8 @@ export function SupportChat() {
 
         // Trigger Agentic Gemini AI Assistant with database & diagnostics tools
         setIsAITyping(true);
-        fetch("http://localhost:8000/api/v1/support/ai-chat", {
+        const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || "https://aegis-auth-adaptive-authentication.onrender.com";
+        fetch(`${mlBackendUrl}/api/v1/support/ai-chat`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",

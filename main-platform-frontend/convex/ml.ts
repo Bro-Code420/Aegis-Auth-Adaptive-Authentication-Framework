@@ -40,7 +40,7 @@ export const assessRisk = action({
         context: v.any(),
     },
     handler: async (ctx, args) => {
-        const mlUrl = process.env.ML_BACKEND_URL || "http://localhost:8000";
+        const mlUrl = process.env.ML_BACKEND_URL || "https://aegis-auth-adaptive-authentication.onrender.com";
 
         // Fetch session & unique security settings mapping for this specific app
         const { session, settings } = await ctx.runQuery(api.ml.getSessionAppAndSettings, {
