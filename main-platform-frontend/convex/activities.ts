@@ -31,7 +31,7 @@ export const list = query({
         if (args.applicationId) {
             // Verify ownership explicitly if requesting a specific app
             if (!appIds.has(args.applicationId.toString())) {
-                throw new Error("Unauthorized access to this application");
+                return [];
             }
 
             return await ctx.db

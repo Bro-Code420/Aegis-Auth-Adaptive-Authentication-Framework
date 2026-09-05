@@ -49,7 +49,7 @@ export const list = query({
                 .withIndex("by_user", (q: any) => q.eq("userId", userId))
                 .filter((q: any) => q.eq(q.field("organizationId"), args.organizationId))
                 .first();
-            if (!membership) throw new Error("Forbidden: Not a member of this organization");
+            if (!membership) return [];
 
             apps = await ctx.db
                 .query("applications")
@@ -66,7 +66,7 @@ export const list = query({
 
         if (args.applicationId) {
             if (!appIds.has(args.applicationId.toString())) {
-                throw new Error("Forbidden: Unauthorized access to this application");
+                return [];
             }
 
             const appSessions = await ctx.db

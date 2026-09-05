@@ -64,7 +64,7 @@ export const getApplicationsByOrg = query({
         .withIndex("by_user", (q: any) => q.eq("userId", identity.subject))
         .filter((q: any) => q.eq(q.field("organizationId"), args.organizationId))
         .first();
-    if (!membership) throw new Error("Forbidden: Not a member of this organization");
+    if (!membership) return [];
 
     return await ctx.db
       .query("applications")
