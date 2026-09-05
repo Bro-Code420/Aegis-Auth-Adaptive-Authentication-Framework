@@ -38,7 +38,7 @@ sequenceDiagram
     ML-->>Render: Sub-Model Predictions & Confidence Scores
     Render->>Render: Evidence Fusion (Detect Variance & Conflicts)
     Render->>PDP: Evaluate (Subject, Resource, Action, Risk Score, Evidence State)
-    PDP-->>Render: Authoritative Decision (ALLOW | STEP_UP | LIMIT | CONTAIN | REVOKE)
+    PDP-->>Render: Authoritative Decision (ALLOW / STEP_UP / LIMIT / CONTAIN / REVOKE)
     Render->>PEP: Server-Side Enforcement (Assert Permissions & Constraints)
     Render->>Audit: Append Tamper-Evident SHA-256 Audit Event
     Render-->>Convex: Enforced State & Risk Metadata
@@ -76,12 +76,12 @@ AegisAuth Pro introduces **continuous, adaptive risk evaluation**:
 
 ```mermaid
 flowchart TD
-    ID[1. Identity & Credentials] --> SESS[2. Monotonic Active Session]
-    SESS --> EVID[3. Telemetry & Cryptographic Evidence]
-    EVID --> ML[4. Multi-Signal Risk Intelligence]
-    ML --> PDP[5. Policy Decision Point]
-    PDP --> PEP[6. Server-Side Policy Enforcement]
-    PEP --> RESP[7. Dynamic Response: ALLOW | STEP_UP | CONTAIN | REVOKE]
+    ID["1. Identity & Credentials"] --> SESS["2. Monotonic Active Session"]
+    SESS --> EVID["3. Telemetry & Cryptographic Evidence"]
+    EVID --> ML["4. Multi-Signal Risk Intelligence"]
+    ML --> PDP["5. Policy Decision Point"]
+    PDP --> PEP["6. Server-Side Policy Enforcement"]
+    PEP --> RESP["7. Dynamic Response: ALLOW / STEP_UP / CONTAIN / REVOKE"]
 ```
 
 Authentication is treated as a continuous state rather than a one-time gate. As client behavioral signals and network telemetry shift, the platform dynamically adjusts security requirements—triggering step-up MFA, restricting high-privilege operations, or immediately revoking compromised sessions.
@@ -106,54 +106,54 @@ Authentication is treated as a continuous state rather than a one-time gate. As 
 
 ```mermaid
 graph TB
-    subgraph Client Layer
-        Browser[Web Browser / Dashboard]
+    subgraph "Client Layer"
+        Browser["Web Browser / Dashboard"]
         SDKClient["Client SDK (@devanshthaware/aegis-auth)"]
     end
 
     subgraph "Vercel Platform (Next.js 16)"
-        NextApp[Next.js Application]
-        ClerkAuth[Clerk Authentication Handler]
-        DashboardUI[Analytics & Security Dashboard]
+        NextApp["Next.js Application"]
+        ClerkAuth["Clerk Authentication Handler"]
+        DashboardUI["Analytics & Security Dashboard"]
     end
 
     subgraph "Convex Cloud Platform"
-        ConvexSchema[(Convex Reactive Store)]
-        ConvexActions[Convex Mutations & Actions]
-        ConvexMLAction[ml:assessRisk Action]
+        ConvexSchema[("Convex Reactive Store")]
+        ConvexActions["Convex Mutations & Actions"]
+        ConvexMLAction["ml:assessRisk Action"]
     end
 
     subgraph "Render ML Backend (FastAPI)"
-        APIRoutes[REST API Routes]
-        TenantGuard[Tenant Isolation Guard]
-        ReplayGuard[Cryptographic Replay Guard]
-        ModelSigner[Ed25519 Model Signer]
-        PolicyRegistry[Signed Policy Registry]
-        BaselineGuard[Candidate Baseline Guard]
-        DriftMonitor[ML Drift & OOD Monitor]
-        LLMGateway[LLM Security Gateway]
-        ResilienceBreakers[Circuit Breakers]
-        AuditLog[Tamper-Evident Audit Chain]
+        APIRoutes["REST API Routes"]
+        TenantGuard["Tenant Isolation Guard"]
+        ReplayGuard["Cryptographic Replay Guard"]
+        ModelSigner["Ed25519 Model Signer"]
+        PolicyRegistry["Signed Policy Registry"]
+        BaselineGuard["Candidate Baseline Guard"]
+        DriftMonitor["ML Drift & OOD Monitor"]
+        LLMGateway["LLM Security Gateway"]
+        ResilienceBreakers["Circuit Breakers"]
+        AuditLog["Tamper-Evident Audit Chain"]
         
         subgraph "ML Inference Engine"
-            Aggregator[Evidence Fusion & Risk Aggregator]
-            M_Login[Login Anomaly Model]
-            M_Session[Session Anomaly Model]
-            M_Device[Device Trust Model]
-            M_Baseline[User Baseline Model]
-            M_Global[Global Threat Model]
+            Aggregator["Evidence Fusion & Risk Aggregator"]
+            M_Login["Login Anomaly Model"]
+            M_Session["Session Anomaly Model"]
+            M_Device["Device Trust Model"]
+            M_Baseline["User Baseline Model"]
+            M_Global["Global Threat Model"]
         end
 
         subgraph "Authorization Layer"
-            PDP_Engine[Policy Decision Point - PDP]
-            PEP_Engine[Policy Enforcement Point - PEP]
+            PDP_Engine["Policy Decision Point (PDP)"]
+            PEP_Engine["Policy Enforcement Point (PEP)"]
         end
     end
 
     subgraph "External Integrations"
-        Gemini[Google Gemini GenAI]
-        Twilio[Twilio Voice Alerts]
-        Pinata[Pinata IPFS Storage]
+        Gemini["Google Gemini GenAI"]
+        Twilio["Twilio Voice Alerts"]
+        Pinata["Pinata IPFS Storage"]
     end
 
     Browser --> NextApp
@@ -259,27 +259,27 @@ AegisAuth Pro employs an ensemble of 5 specialized machine learning models locat
 ```mermaid
 graph TD
     subgraph "Feature Extraction & Anomaly Models"
-        F_In[Raw Telemetry & Signals] --> M1[Login Anomaly Model\nGeo-velocity, failed attempts, ASN]
-        F_In --> M2[Session Anomaly Model\nContinuous packet intervals, activity jitter]
-        F_In --> M3[Device Trust Model\nCanvas/WebGL fingerprint, hardware consistency]
-        F_In --> M4[User Baseline Model\nHistorical profile deviation]
-        F_In --> M5[Global Threat Model\nCross-tenant IP reputation, Tor/Proxy exit nodes]
+        F_In["Raw Telemetry & Signals"] --> M1["Login Anomaly Model<br/>Geo-velocity, failed attempts, ASN"]
+        F_In --> M2["Session Anomaly Model<br/>Continuous packet intervals, activity jitter"]
+        F_In --> M3["Device Trust Model<br/>Canvas/WebGL fingerprint, hardware consistency"]
+        F_In --> M4["User Baseline Model<br/>Historical profile deviation"]
+        F_In --> M5["Global Threat Model<br/>Cross-tenant IP reputation, Tor/Proxy exit nodes"]
     end
 
-    M1 -->|Score + Confidence| EF[Evidence Fusion Engine]
+    M1 -->|Score + Confidence| EF["Evidence Fusion Engine"]
     M2 -->|Score + Confidence| EF
     M3 -->|Score + Confidence| EF
     M4 -->|Score + Confidence| EF
     M5 -->|Score + Confidence| EF
 
     subgraph "Evidence Fusion & Quality Analysis"
-        EF --> ConfCheck[Confidence-Weighted Aggregation]
-        EF --> DisagreeCheck[MODEL_CONFLICT Detector\nScore Range > 0.65 or Std > 0.30]
-        EF --> ColdStart[Cold-Start / New User Attenuation]
+        EF --> ConfCheck["Confidence-Weighted Aggregation"]
+        EF --> DisagreeCheck["MODEL_CONFLICT Detector<br/>Score Range > 0.65 or Std > 0.30"]
+        EF --> ColdStart["Cold-Start / New User Attenuation"]
     end
 
-    ConfCheck --> OutRisk[Composite Risk Score: 0.00 - 1.00]
-    DisagreeCheck --> OutState[Evidence State: TRUSTED | SUSPICIOUS | UNKNOWN | COMPROMISED]
+    ConfCheck --> OutRisk["Composite Risk Score: 0.00 - 1.00"]
+    DisagreeCheck --> OutState["Evidence State: TRUSTED / SUSPICIOUS / UNKNOWN / COMPROMISED"]
     ColdStart --> OutState
 ```
 
@@ -452,13 +452,13 @@ Multi-tenancy is enforced strictly on the server side:
 
 ```mermaid
 flowchart TD
-    Req[Incoming API Request] --> Extract[Extract x-api-key & x-tenant-id]
-    Extract --> RegLookup[Resolve Tenant from Cryptographic API Key Registry]
-    RegLookup --> MatchCheck{Does Key Own Claimed Tenant?}
-    MatchCheck -- No --> Deny[HTTP 403 Forbidden: Tenant Mismatch]
-    MatchCheck -- Yes --> ResourceCheck{Does Target Resource Belong to Tenant?}
-    ResourceCheck -- No --> DenyIDOR[HTTP 403 Forbidden: Cross-Tenant Access Denied]
-    ResourceCheck -- Yes --> Allow[Proceed to Policy Decision Point]
+    Req["Incoming API Request"] --> Extract["Extract x-api-key & x-tenant-id"]
+    Extract --> RegLookup["Resolve Tenant from Cryptographic API Key Registry"]
+    RegLookup --> MatchCheck{"Does Key Own Claimed Tenant?"}
+    MatchCheck -- "No" --> Deny["HTTP 403 Forbidden: Tenant Mismatch"]
+    MatchCheck -- "Yes" --> ResourceCheck{"Does Target Resource Belong to Tenant?"}
+    ResourceCheck -- "No" --> DenyIDOR["HTTP 403 Forbidden: Cross-Tenant Access Denied"]
+    ResourceCheck -- "Yes" --> Allow["Proceed to Policy Decision Point"]
 ```
 
 Client-supplied `tenant_id` values in URL parameters or request bodies are never trusted blindly; tenant identity is authoritatively resolved from verified API credentials.
@@ -484,13 +484,13 @@ When using Google Gemini for natural language threat analysis or voice dispatch:
 
 ```mermaid
 flowchart LR
-    PromptIn[External Telemetry / Incident Data] --> Gateway[LLM Security Gateway]
-    Gateway --> Sanitize[Sanitize & Strip System Instruction Overrides]
-    Sanitize --> Boundary[Wrap in Strict XML/Delimited Boundaries]
-    Boundary --> GeminiCall[Gemini 1.5 Flash API]
-    GeminiCall --> OutputParser[Pydantic Schema Validation]
-    OutputParser --> AdvisoryWrap[Tag as is_authoritative = False]
-    AdvisoryWrap --> AnalystView[Dashboard Security Explanation]
+    PromptIn["External Telemetry / Incident Data"] --> Gateway["LLM Security Gateway"]
+    Gateway --> Sanitize["Sanitize & Strip System Instruction Overrides"]
+    Sanitize --> Boundary["Wrap in Strict XML/Delimited Boundaries"]
+    Boundary --> GeminiCall["Gemini 1.5 Flash API"]
+    GeminiCall --> OutputParser["Pydantic Schema Validation"]
+    OutputParser --> AdvisoryWrap["Tag as is_authoritative = False"]
+    AdvisoryWrap --> AnalystView["Dashboard Security Explanation"]
 ```
 
 - **Strict Advisory Boundary**: LLM output is explicitly tagged `is_authoritative = False` and cannot trigger policy transitions directly.
@@ -539,17 +539,17 @@ flowchart LR
     end
     
     subgraph "Event 1"
-        E1_Data["Event: LOGIN_EVALUATION\nSession: sess_001\nDecision: ALLOW"]
+        E1_Data["Event: LOGIN_EVALUATION<br/>Session: sess_001<br/>Decision: ALLOW"]
         G_Hash & E1_Data --> H1["Hash 1: SHA256(G_Hash + E1_Data)"]
     end
 
     subgraph "Event 2"
-        E2_Data["Event: STEP_UP_TRIGGERED\nSession: sess_001\nReason: IMPOSSIBLE_TRAVEL"]
+        E2_Data["Event: STEP_UP_TRIGGERED<br/>Session: sess_001<br/>Reason: IMPOSSIBLE_TRAVEL"]
         H1 & E2_Data --> H2["Hash 2: SHA256(H1 + E2_Data)"]
     end
 
     subgraph "Verification"
-        H2 -.-> Verify["audit_chain.verify_integrity()\nReturns True if unmutated"]
+        H2 -.-> Verify["audit_chain.verify_integrity()<br/>Returns True if unmutated"]
     end
 ```
 
