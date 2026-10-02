@@ -81,15 +81,24 @@ def is_origin_allowed(origin: str | None) -> bool:
         return True
     if origin in ALLOWED_ORIGINS:
         return True
-    if origin.endswith(".vercel.app") or origin.endswith(".convex.cloud") or origin.endswith(".convex.site"):
+    # Allow any local, LAN, private IP, localhost, or dev origin
+    if (
+        origin.startswith("http://localhost:") or
+        origin.startswith("http://127.0.0.1:") or
+        origin.startswith("http://10.") or
+        origin.startswith("http://192.168.") or
+        origin.startswith("http://172.") or
+        origin.endswith(".vercel.app") or
+        origin.endswith(".convex.cloud") or
+        origin.endswith(".convex.site")
+    ):
         return True
     return False
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.convex\.(cloud|site)",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

@@ -10,12 +10,10 @@ from urllib.parse import urlparse
 
 load_dotenv()
 load_dotenv(".env.local") # Explicitly load .env.local if present
-CONVEX_URL = os.getenv("NEXT_PUBLIC_CONVEX_URL", "mock_url")
 convex_client = None
 
 
 def _is_mock_convex_url(url: str) -> bool:
-    # In this repo we treat any value containing "mock" as "no Convex available".
     return (not url) or ("mock" in url.lower())
 
 
@@ -29,20 +27,20 @@ def get_convex_client() -> ConvexClient | None:
     if convex_client is not None:
         return convex_client
 
-    if _is_mock_convex_url(CONVEX_URL):
+    url = os.getenv("NEXT_PUBLIC_CONVEX_URL", "")
+    if _is_mock_convex_url(url):
         return None
 
-    parsed = urlparse(CONVEX_URL)
-    # Convex expects an absolute URL like: https://<name>-<id>.convex.cloud
+    parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         logger.warning(
             "Invalid NEXT_PUBLIC_CONVEX_URL for Convex (expected absolute http(s) URL). Got: %r. Running without Convex.",
-            CONVEX_URL,
+            url,
         )
         return None
 
     try:
-        convex_client = ConvexClient(CONVEX_URL)
+        convex_client = ConvexClient(url)
         return convex_client
     except Exception:
         logger.exception("Failed to initialize ConvexClient; running without Convex.")
@@ -429,9 +427,9 @@ Answer any technical, architectural, security, or developer integration question
         advisory_output = llm_gateway.enforce_advisory_invariants(ai_text)
 
         # Write the response back to Convex DB so it appears live in the chat UI
-        if not _is_mock_convex_url(CONVEX_URL):
-            client = get_convex_client()
-            if client is not None and not request.ticket_id.startswith("test_"):
+        client = get_convex_client()
+        if client is not None and not request.ticket_id.startswith("test_"):
+            try:
                 client.mutation("support:sendMessage", {
                     "ticketId": request.ticket_id,
                     "senderId": "system",
@@ -439,6 +437,8 @@ Answer any technical, architectural, security, or developer integration question
                     "content": ai_text,
                     "isAiGenerated": True
                 })
+            except Exception as e:
+                logger.error(f"Failed to persist message to Convex: {e}")
 
         return {
             "status": "success",

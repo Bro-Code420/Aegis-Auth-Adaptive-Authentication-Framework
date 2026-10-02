@@ -109,7 +109,9 @@ export function SupportChat() {
 
         // Trigger Agentic Gemini AI Assistant with database & diagnostics tools
         setIsAITyping(true);
-        const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || "https://aegis-auth-adaptive-authentication.onrender.com";
+        const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+        const isLocal = host === "localhost" || host === "127.0.0.1" || host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("172.");
+        const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || (isLocal ? `http://${host}:8000` : "https://aegis-auth-adaptive-authentication.onrender.com");
         fetch(`${mlBackendUrl}/api/v1/support/ai-chat`, {
             method: "POST",
             headers: { 

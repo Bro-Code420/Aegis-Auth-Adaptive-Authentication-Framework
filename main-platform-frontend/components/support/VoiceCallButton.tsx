@@ -17,7 +17,9 @@ export function VoiceCallButton() {
         setCallStatus("connecting");
 
         try {
-            const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || "https://aegis-auth-adaptive-authentication.onrender.com";
+            const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+            const isLocal = host === "localhost" || host === "127.0.0.1" || host.startsWith("10.") || host.startsWith("192.168.") || host.startsWith("172.");
+            const mlBackendUrl = process.env.NEXT_PUBLIC_ML_BACKEND_URL || (isLocal ? `http://${host}:8000` : "https://aegis-auth-adaptive-authentication.onrender.com");
             const response = await fetch(`${mlBackendUrl}/api/v1/support/call`, {
                 method: "POST",
                 headers: {
@@ -32,7 +34,7 @@ export function VoiceCallButton() {
 
             const data = await response.json();
 
-            if (!response.ok || data.status === "error") {
+            if (!response.ok || data.status === "error" || data.status === "throttled") {
                 const errMsg = data.message || "Failed to initiate voice call";
                 if (errMsg.includes("not yet verified") || errMsg.includes("Twilio")) {
                     toast.error("Twilio Verification Required", {

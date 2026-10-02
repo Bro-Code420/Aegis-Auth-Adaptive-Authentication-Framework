@@ -16,8 +16,8 @@ class AlertGovernor:
     """
     def __init__(
         self,
-        cooldown_seconds: int = 300,            # 5 minutes per user/incident
-        max_alerts_per_tenant_hour: int = 20,   # Max voice/SMS calls per tenant per hour
+        cooldown_seconds: int = 10,             # 10s cooldown for responsive testing
+        max_alerts_per_tenant_hour: int = 100,  # Max voice/SMS calls per tenant per hour
         max_inferences_per_ip_minute: int = 60, # Max ML requests per IP per minute
         max_llm_calls_per_user_hour: int = 30,  # Max LLM queries per user per hour
     ):
